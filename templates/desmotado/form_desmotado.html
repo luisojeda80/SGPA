@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_form_helpers.html" import render_field %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <!-- Tarjeta de Resumen del Lote -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header"><h5 class="mb-0">Resumen del Lote a Procesar</h5></div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Productor:</strong> {{ carga.productor.nombre_completo }}</li>
+                    <li class="list-group-item"><strong>Vehículo:</strong> {{ carga.vehiculo.placa }} {% if carga.placa_acoplado %} / {{ carga.placa_acoplado }} {% endif %}</li>
+                    <li class="list-group-item"><strong>Peso Neto de Algodón Bruto:</strong> <span class="fw-bold">{{ "%.2f"|format(carga.peso_neto) }} kg</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <!-- Formulario para registrar el resultado -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header"><h5 class="mb-0">Registrar Resultado del Desmotado</h5></div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.kilos_fibra, class="form-control form-control-lg", placeholder="Ej: 1250.75") }}
+                    {{ render_field(form.kilos_semilla, class="form-control form-control-lg mt-3", placeholder="Ej: 2340.50") }}
+                    <div class="d-grid gap-2 mt-4">
+                        {{ form.submit(class="btn btn-success btn-lg") }}
+                        <a href="{{ url_for('desmotado.lotes_pendientes') }}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
