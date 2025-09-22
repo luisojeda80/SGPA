@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_form_helpers.html" import render_field %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <!-- Tarjeta de Resumen del Fardo -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header"><h5 class="mb-0">Datos del Fardo</h5></div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Lote de Origen:</strong> {{ fardo.proceso_desmotado.carga.lote_id }}</li>
+                    <li class="list-group-item"><strong>Peso:</strong> <span class="fw-bold">{{ "%.2f"|format(fardo.peso) }} kg</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <!-- Formulario para clasificar -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header"><h5 class="mb-0">Parámetros de Calidad</h5></div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="row">
+                        <div class="col-md-12">{{ render_field(form.grado, class="form-select") }}</div>
+                        <div class="col-md-4">{{ render_field(form.longitud_fibra, class="form-control", placeholder="Ej: 28.5") }}</div>
+                        <div class="col-md-4">{{ render_field(form.resistencia, class="form-control", placeholder="Ej: 30.1") }}</div>
+                        <div class="col-md-4">{{ render_field(form.micronaire, class="form-control", placeholder="Ej: 4.2") }}</div>
+                        <div class="col-md-12">{{ render_field(form.observaciones, class="form-control", rows=3, placeholder="Opcional") }}</div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <a href="{{ url_for('calidad.detalle_proceso', proceso_id=fardo.proceso_desmotado_id) }}" class="btn btn-secondary me-2">Cancelar</a>
+                        {{ form.submit(class="btn btn-success") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

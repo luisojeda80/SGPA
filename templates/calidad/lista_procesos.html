@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Lote</th>
+                <th>Productor</th>
+                <th>Fecha de Proceso</th>
+                <th>Kilos Fibra</th>
+                <th>Kilos Semilla</th>
+                <th>Fardos Registrados</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proceso in procesos.items %}
+            <tr>
+                <td><strong>{{ proceso.carga.lote_id }}</strong></td>
+                <td>{{ proceso.carga.productor.nombre_completo }}</td>
+                <td>{{ proceso.fecha_proceso.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>{{ "%.2f"|format(proceso.kilos_fibra) }}</td>
+                <td>{{ "%.2f"|format(proceso.kilos_semilla) }}</td>
+                <td><span class="badge bg-info">{{ proceso.fardos.count() }}</span></td>
+                <td>
+                    <a href="{{ url_for('calidad.detalle_proceso', proceso_id=proceso.id) }}" class="btn btn-sm btn-primary" title="Gestionar Fardos y Calidad">
+                        <i class="bi bi-card-checklist me-1"></i> Gestionar
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">No hay procesos de desmotado registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+{% if procesos.pages > 1 %}
+<nav>
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not procesos.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('calidad.listar_procesos', page=procesos.prev_num) }}">Anterior</a>
+        </li>
+        {% for page_num in procesos.iter_pages() %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == procesos.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('calidad.listar_procesos', page=page_num) }}">{{ page_num }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not procesos.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('calidad.listar_procesos', page=procesos.next_num) }}">Siguiente</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}
+

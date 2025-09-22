@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+</div>
+
+<div class="row g-4">
+    <!-- Card de Bienvenida -->
+    <div class="col-12">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Bienvenido, {{ current_user.first_name }}</h5>
+                <p class="card-text">Panel de control para la gestión de cargas en la planta {{ current_user.planta.nombre }}.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card de Accesos Directos -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-lightning-charge me-2"></i>Acciones Frecuentes</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('recepcion.nueva_carga') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Registrar Nueva Carga</a>
+                    <a href="{{ url_for('recepcion.listar_cargas') }}" class="btn btn-outline-dark"><i class="bi bi-list-task me-2"></i>Ver Historial de Cargas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card de Resumen Rápido -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Resumen del Día</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Cargas Recibidas Hoy
+                        <span class="badge bg-primary rounded-pill">5</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Cargas Pendientes de Salida
+                        <span class="badge bg-warning text-dark rounded-pill">2</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
