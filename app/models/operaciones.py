@@ -1,10 +1,7 @@
 from app import db
 from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import func
-
-# Importamos los modelos de usuario necesarios para las relaciones
-from .user import User, Planta
+from .user import User
 
 class Productor(db.Model):
     """Modelo para los productores de algodón."""
@@ -55,7 +52,8 @@ class Carga(db.Model):
     usuario_balancero = db.relationship('User', foreign_keys=[usuario_balancero_id])
     usuario_salida = db.relationship('User', foreign_keys=[usuario_salida_id])
     proceso_desmotado = db.relationship('ProcesoDesmotado', backref='carga', uselist=False)
-    planta = db.relationship('Planta')
+    # --- NUEVA RELACIÓN AÑADIDA ---
+    liquidacion = db.relationship('Liquidacion', backref='carga', uselist=False)
 
     @hybrid_property
     def peso_neto(self):
@@ -72,38 +70,25 @@ class ProcesoDesmotado(db.Model):
     kilos_semilla = db.Column(db.Float, nullable=False)
     observaciones = db.Column(db.Text)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
     usuario = db.relationship('User')
-    # Relación uno a muchos con los fardos generados
     fardos = db.relationship('Fardo', backref='proceso_desmotado', lazy='dynamic')
 
     @hybrid_property
-    def rendimiento_fibra(self):
-        if self.kilos_fibra and self.carga and self.carga.peso_neto > 0:
+    def rendimiento(self):
+        if self.kilos_fibra and self.carga.peso_neto > 0:
             return (self.kilos_fibra / self.carga.peso_neto) * 100
         return 0.0
 
-# --- NUEVOS MODELOS AÑADIDOS ---
-
 class Fardo(db.Model):
-    """Modelo para los fardos de fibra generados."""
+    """Modelo para cada fardo de fibra producido."""
     id = db.Column(db.Integer, primary_key=True)
-    proceso_desmotado_id = db.Column(db.Integer, db.ForeignKey('proceso_desmotado.id'), nullable=False)
+    proceso_id = db.Column(db.Integer, db.ForeignKey('proceso_desmotado.id'), nullable=False)
     numero_fardo = db.Column(db.Integer, nullable=False) # Consecutivo por planta/año
     peso = db.Column(db.Float, nullable=False)
-    
-    # Relación uno a uno con la clasificación de calidad
     clasificacion = db.relationship('ClasificacionCalidad', backref='fardo', uselist=False)
 
-    @staticmethod
-    def siguiente_numero_fardo(planta_id):
-        """Genera el siguiente número de fardo consecutivo para una planta."""
-        max_fardo = db.session.query(func.max(Fardo.numero_fardo)).join(ProcesoDesmotado).join(Carga).filter(Carga.planta_id == planta_id).scalar()
-        return (max_fardo or 0) + 1
-
-
 class ClasificacionCalidad(db.Model):
-    """Modelo para la clasificación de calidad de cada fardo."""
+    """Modelo para la clasificación de calidad de un fardo."""
     id = db.Column(db.Integer, primary_key=True)
     fardo_id = db.Column(db.Integer, db.ForeignKey('fardo.id'), nullable=False, unique=True)
     grado = db.Column(db.String(1), nullable=False) # A, B, C, D
@@ -113,5 +98,24 @@ class ClasificacionCalidad(db.Model):
     observaciones = db.Column(db.Text)
     fecha_clasificacion = db.Column(db.DateTime, default=datetime.utcnow)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    usuario = db.relationship('User')
 
+# --- NUEVO MODELO AÑADIDO ---
+class Liquidacion(db.Model):
+    """Modelo para almacenar los datos de la liquidación de una carga."""
+    id = db.Column(db.Integer, primary_key=True)
+    carga_id = db.Column(db.Integer, db.ForeignKey('carga.id'), nullable=False, unique=True)
+    fecha_liquidacion = db.Column(db.DateTime, default=datetime.utcnow)
+    numero_liquidacion = db.Column(db.String(50), unique=True, nullable=False)
+    
+    precio_kilo_bruto = db.Column(db.Float, nullable=False)
+    total_liquidacion_bruta = db.Column(db.Float, nullable=False)
+    
+    anticipo_recibido = db.Column(db.Float, default=0.0)
+    importe_retencion = db.Column(db.Float, default=0.0)
+    otras_deducciones = db.Column(db.Float, default=0.0)
+    
+    total_a_cobrar = db.Column(db.Float, nullable=False)
+    
+    usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     usuario = db.relationship('User')
