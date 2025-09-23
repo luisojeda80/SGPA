@@ -46,22 +46,24 @@ class DesmotadoForm(FlaskForm):
     observaciones = TextAreaField('Observaciones', validators=[Optional(), Length(max=500)])
     submit = SubmitField('Guardar Proceso')
 
-# --- NUEVOS FORMULARIOS AÑADIDOS ---
 class FardoForm(FlaskForm):
-    """Formulario simple para añadir un fardo a un proceso."""
-    peso = FloatField('Peso del Fardo (kg)', validators=[DataRequired("El peso es obligatorio."), NumberRange(min=1, max=500)])
+    """Formulario para añadir un nuevo fardo a un proceso."""
+    peso = FloatField('Peso del Fardo (kg)', validators=[DataRequired(), NumberRange(min=1)])
     submit = SubmitField('Añadir Fardo')
 
 class ClasificacionForm(FlaskForm):
     """Formulario para clasificar la calidad de un fardo."""
-    grado = SelectField('Grado de Calidad', choices=[
-        ('A', 'A (Premium)'),
-        ('B', 'B (Estándar)'),
-        ('C', 'C (Comercial)'),
-        ('D', 'D (Industrial)')
-    ], validators=[DataRequired()])
+    grado = SelectField('Grado de Calidad', choices=[('A', 'Grado A'), ('B', 'Grado B'), ('C', 'Grado C'), ('D', 'Grado D')], validators=[DataRequired()])
     longitud_fibra = FloatField('Longitud de Fibra (mm)', validators=[Optional(), NumberRange(min=0)])
     resistencia = FloatField('Resistencia (g/tex)', validators=[Optional(), NumberRange(min=0)])
     micronaire = FloatField('Micronaire', validators=[Optional(), NumberRange(min=0)])
     observaciones = TextAreaField('Observaciones', validators=[Optional(), Length(max=500)])
     submit = SubmitField('Guardar Clasificación')
+
+class LiquidacionForm(FlaskForm):
+    """Formulario para ingresar los datos de la liquidación."""
+    precio_kilo_bruto = FloatField('Precio por Kilo de Algodón Bruto ($)', validators=[DataRequired(), NumberRange(min=0)])
+    anticipo_recibido = FloatField('Anticipo Recibido ($)', validators=[Optional(), NumberRange(min=0)])
+    importe_retencion = FloatField('Importe de Retención ($)', validators=[Optional(), NumberRange(min=0)])
+    otras_deducciones = FloatField('Otras Deducciones ($)', validators=[Optional(), NumberRange(min=0)])
+    submit = SubmitField('Generar y Guardar Liquidación')

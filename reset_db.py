@@ -1,66 +1,77 @@
-from app import db
-from flask_security import UserMixin, RoleMixin
+from app import create_app
+from app.models.user import db, User, Role, Planta
+from app.models.operaciones import Productor
+from werkzeug.security import generate_password_hash
 import uuid
 
-# Tabla de asociación para la relación muchos a muchos entre Usuarios y Roles
-roles_users = db.Table('roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
-)
+# Crear una instancia de la aplicación para tener el contexto correcto
+app = create_app()
 
-class Role(db.Model, RoleMixin):
-    """Modelo para los roles de usuario."""
-    __tablename__ = 'role'
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(80), unique=True)
-    description = db.Column(db.String(255))
+# Usar el contexto de la aplicación para interactuar con la base de datos
+with app.app_context():
+    print("--- INICIANDO REINICIO DE BASE DE DATOS ---")
+    
+    print("1. Borrando la base de datos anterior...")
+    db.drop_all()
+    
+    print("2. Creando nuevas tablas...")
+    db.create_all()
 
-    @staticmethod
-    def insert_roles():
-        roles = {
-            'Balancero': 'Nivel Básico.',
-            'Administrativo': 'Nivel Intermedio.',
-            'AdminPlanta': 'Nivel Completo de Planta.',
-            'CasaCentral': 'Nivel Corporativo.'
-        }
-        for r_name, r_desc in roles.items():
-            role = Role.query.filter_by(name=r_name).first()
-            if role is None:
-                role = Role(name=r_name, description=r_desc)
-                db.session.add(role)
-        db.session.commit()
+    print("3. Insertando datos iniciales (roles y plantas)...")
+    Role.insert_roles()
+    Planta.insert_plantas()
 
-class User(db.Model, UserMixin):
-    """Modelo para los usuarios del sistema."""
-    __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    first_name = db.Column(db.String(255))
-    last_name = db.Column(db.String(255))
-    active = db.Column(db.Boolean(), default=True)
-    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
-    planta_id = db.Column(db.Integer, db.ForeignKey('planta.id'), nullable=True)
-    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    # Obtener los roles y plantas para asignarlos a los usuarios
+    casa_central_role = Role.query.filter_by(name='CasaCentral').first()
+    admin_planta_role = Role.query.filter_by(name='AdminPlanta').first()
+    administrativo_role = Role.query.filter_by(name='Administrativo').first()
+    balancero_role = Role.query.filter_by(name='Balancero').first()
+    planta1 = Planta.query.filter_by(codigo='P01').first()
 
-class Planta(db.Model):
-    """Modelo para las plantas desmotadoras."""
-    __tablename__ = 'planta'
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), unique=True, nullable=False)
-    codigo = db.Column(db.String(10), unique=True, nullable=False)
-    usuarios = db.relationship('User', backref='planta', lazy=True)
+    # --- Creación de Usuarios de Prueba ---
+    print("4. Creando usuario Super Administrador (Casa Central)...")
+    admin_user = User(
+        email='admin@sgpa.com',
+        password=generate_password_hash('Formosa2025*', method='pbkdf2:sha256'),
+        first_name='Admin',
+        last_name='Global',
+        active=True,
+        fs_uniquifier=str(uuid.uuid4()) # Campo requerido
+    )
+    admin_user.roles.append(casa_central_role)
+    db.session.add(admin_user)
 
-    @staticmethod
-    def insert_plantas():
-        plantas = [
-            {'nombre': 'Planta Formosa', 'codigo': 'P01'},
-            {'nombre': 'Planta General Belgrano', 'codigo': 'P02'}
-        ]
-        for p_data in plantas:
-            planta = Planta.query.filter_by(codigo=p_data['codigo']).first()
-            if planta is None:
-                planta = Planta(**p_data)
-                db.session.add(planta)
-        db.session.commit()
+    print("5. Creando usuario Administrativo de Planta...")
+    administrativo_user = User(
+        email='admin.p01@sgpa.com',
+        password=generate_password_hash('testing123', method='pbkdf2:sha256'),
+        first_name='Ana',
+        last_name='Gomez',
+        active=True,
+        fs_uniquifier=str(uuid.uuid4()),
+        planta_id=planta1.id
+    )
+    administrativo_user.roles.append(administrativo_role)
+    db.session.add(administrativo_user)
 
+    print("6. Creando usuario Balancero...")
+    balancero_user = User(
+        email='balancero.p01@sgpa.com',
+        password=generate_password_hash('testing123', method='pbkdf2:sha256'),
+        first_name='Juan',
+        last_name='Perez',
+        active=True,
+        fs_uniquifier=str(uuid.uuid4()),
+        planta_id=planta1.id
+    )
+    balancero_user.roles.append(balancero_role)
+    db.session.add(balancero_user)
+
+    print("7. Creando productor de prueba...")
+    p = Productor(nombre_completo='Productor de Prueba S.A.', cuit='30123456789', renpa='PR-123', activo=True)
+    db.session.add(p)
+
+    # Guardar todos los cambios en la base de datos
+    db.session.commit()
+
+    print("\n¡LISTO! La base de datos ha sido reiniciada exitosamente.")

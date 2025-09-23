@@ -32,7 +32,6 @@ def create_app(config_class=Config):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security.init_app(app, user_datastore)
 
-    # Registrar Blueprints (módulos de la aplicación)
     from app.routes.main import bp as main_bp
     app.register_blueprint(main_bp)
 
@@ -47,5 +46,9 @@ def create_app(config_class=Config):
 
     from app.routes.calidad import bp as calidad_bp
     app.register_blueprint(calidad_bp)
+    
+    # --- NUEVO BLUEPRINT REGISTRADO ---
+    from app.routes.liquidacion import bp as liquidacion_bp
+    app.register_blueprint(liquidacion_bp)
 
     return app
