@@ -1,50 +1,49 @@
 from flask import Blueprint, render_template
 from flask_security import login_required, roles_required
-from app import db
-from app.models.operaciones import Carga, ProcesoDesmotado, Planta
 from sqlalchemy import func
+from app import db
+from app.models.operaciones import Carga, ProcesoDesmotado
+from app.models.user import Planta
 
 bp = Blueprint('reportes', __name__, url_prefix='/reportes')
 
-@bp.route('/comparativo_plantas')
+@bp.route('/comparativo-plantas')
 @login_required
 @roles_required('CasaCentral')
 def comparativo_plantas():
-    """
-    Muestra un reporte comparativo del rendimiento entre todas las plantas.
-    """
-    # Subconsulta para obtener el peso neto total por planta
-    subquery_neto = db.session.query(
-        Carga.planta_id,
-        func.sum(Carga.peso_neto).label('total_neto')
-    ).filter(Carga.peso_neto != None).group_by(Carga.planta_id).subquery()
-
-    # Subconsulta para obtener la fibra total producida por planta
-    subquery_fibra = db.session.query(
-        Carga.planta_id,
-        func.sum(ProcesoDesmotado.kilos_fibra).label('total_fibra')
-    ).join(ProcesoDesmotado).group_by(Carga.planta_id).subquery()
-
-    # Consulta principal que une los resultados con la información de la planta
-    datos_plantas = db.session.query(
-        Planta,
-        subquery_neto.c.total_neto,
-        subquery_fibra.c.total_fibra
-    ).outerjoin(subquery_neto, Planta.id == subquery_neto.c.planta_id)\
-     .outerjoin(subquery_fibra, Planta.id == subquery_fibra.c.planta_id)\
-     .order_by(Planta.nombre).all()
+    """Muestra un reporte comparativo del rendimiento de todas las plantas."""
     
-    # Procesar los datos para la plantilla
-    reporte = []
-    for planta, total_neto, total_fibra in datos_plantas:
-        total_neto = total_neto or 0
-        total_fibra = total_fibra or 0
+    # Obtenemos todas las plantas de la base de datos
+    plantas = Planta.query.order_by(Planta.nombre).all()
+    datos_reporte = []
+
+    for planta in plantas:
+        # Total de algodón recibido (peso neto)
+        total_neto = db.session.query(func.sum(Carga.peso_neto)).filter(
+            Carga.planta_id == planta.id,
+            Carga.estado == 'Procesado'
+        ).scalar() or 0
+
+        # Total de fibra producida
+        total_fibra = db.session.query(func.sum(ProcesoDesmotado.kilos_fibra)).join(Carga).filter(
+            Carga.planta_id == planta.id
+        ).scalar() or 0
+        
+        # Rendimiento promedio
         rendimiento = (total_fibra / total_neto * 100) if total_neto > 0 else 0
-        reporte.append({
+        
+        # Cantidad de lotes procesados
+        lotes_procesados = Carga.query.filter(
+            Carga.planta_id == planta.id,
+            Carga.estado == 'Procesado'
+        ).count()
+
+        datos_reporte.append({
             'planta': planta,
             'total_neto': total_neto,
             'total_fibra': total_fibra,
-            'rendimiento': rendimiento
+            'rendimiento': rendimiento,
+            'lotes_procesados': lotes_procesados
         })
 
-    return render_template('reportes/comparativo_plantas.html', title='Reporte Comparativo de Plantas', reporte=reporte)
+    return render_template('reportes/comparativo_plantas.html', title='Reporte Comparativo de Plantas', datos_reporte=datos_reporte)
