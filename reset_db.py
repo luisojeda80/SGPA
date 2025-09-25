@@ -74,4 +74,5 @@ with app.app_context():
     # Guardar todos los cambios en la base de datos
     db.session.commit()
 
+
     print("\n¡LISTO! La base de datos ha sido reiniciada exitosamente.")

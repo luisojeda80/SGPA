@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('liquidacion.lotes_pendientes') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información del Lote -->
+    <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>Información del Lote</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Lote ID:</dt>
+                    <dd class="col-sm-8"><strong>{{ carga.lote_id }}</strong></dd>
+                    
+                    <dt class="col-sm-4">Productor:</dt>
+                    <dd class="col-sm-8">{{ carga.productor.nombre_completo }}</dd>
+                    
+                    <dt class="col-sm-4">CUIT:</dt>
+                    <dd class="col-sm-8">{{ carga.productor.cuit }}</dd>
+                    
+                    <dt class="col-sm-4">Peso Bruto:</dt>
+                    <dd class="col-sm-8">{{ "%.2f"|format(carga.peso_bruto) }} kg</dd>
+                    
+                    <dt class="col-sm-4">Peso Neto:</dt>
+                    <dd class="col-sm-8"><strong>{{ "%.2f"|format(carga.peso_neto) }} kg</strong></dd>
+                    
+                    <dt class="col-sm-4">Fibra Obtenida:</dt>
+                    <dd class="col-sm-8">{{ "%.2f"|format(carga.proceso_desmotado.kilos_fibra) }} kg</dd>
+                    
+                    <dt class="col-sm-4">Rendimiento:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-info">{{ "%.2f"|format(carga.proceso_desmotado.rendimiento) }}%</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Liquidación -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-calculator me-2"></i>Datos de Liquidación</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.precio_kilo_bruto.label(class="form-label") }}
+                        {{ form.precio_kilo_bruto(class="form-control") }}
+                        {% for error in form.precio_kilo_bruto.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.anticipo.label(class="form-label") }}
+                        {{ form.anticipo(class="form-control") }}
+                        {% for error in form.anticipo.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.retenciones.label(class="form-label") }}
+                        {{ form.retenciones(class="form-control") }}
+                        {% for error in form.retenciones.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.otras_deducciones.label(class="form-label") }}
+                        {{ form.otras_deducciones(class="form-control") }}
+                        {% for error in form.otras_deducciones.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.observaciones.label(class="form-label") }}
+                        {{ form.observaciones(class="form-control") }}
+                        {% for error in form.observaciones.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Cálculos en tiempo real -->
+                    <div class="border-top pt-3">
+                        <h6>Cálculo Estimado:</h6>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <small class="text-muted">Total Bruto:</small><br>
+                                <span id="total-bruto" class="fw-bold">$0.00</span>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">Total a Pagar:</small><br>
+                                <span id="total-pagar" class="fw-bold text-success">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        {{ form.submit(class="btn btn-success btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cálculo en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const pesoNeto = {{ carga.peso_neto }};
+    const precioInput = document.getElementById('precio_kilo_bruto');
+    const anticipoInput = document.getElementById('anticipo');
+    const retencionesInput = document.getElementById('retenciones');
+    const deduccionesInput = document.getElementById('otras_deducciones');
+    const totalBrutoSpan = document.getElementById('total-bruto');
+    const totalPagarSpan = document.getElementById('total-pagar');
+
+    function calcular() {
+        const precio = parseFloat(precioInput.value) || 0;
+        const anticipo = parseFloat(anticipoInput.value) || 0;
+        const retenciones = parseFloat(retencionesInput.value) || 0;
+        const deducciones = parseFloat(deduccionesInput.value) || 0;
+
+        const totalBruto = precio * pesoNeto;
+        const totalPagar = totalBruto - anticipo - retenciones - deducciones;
+
+        totalBrutoSpan.textContent = '$' + totalBruto.toLocaleString('es-AR', {minimumFractionDigits: 2});
+        totalPagarSpan.textContent = '$' + totalPagar.toLocaleString('es-AR', {minimumFractionDigits: 2});
+        
+        // Cambiar color si es negativo
+        if (totalPagar < 0) {
+            totalPagarSpan.className = 'fw-bold text-danger';
+        } else {
+            totalPagarSpan.className = 'fw-bold text-success';
+        }
+    }
+
+    // Escuchar cambios en los inputs
+    [precioInput, anticipoInput, retencionesInput, deduccionesInput].forEach(input => {
+        input.addEventListener('input', calcular);
+    });
+
+    // Cálculo inicial
+    calcular();
+});
+</script>
+{% endblock %}

@@ -52,6 +52,7 @@ class Carga(db.Model):
     usuario_balancero = db.relationship('User', foreign_keys=[usuario_balancero_id])
     usuario_salida = db.relationship('User', foreign_keys=[usuario_salida_id])
     proceso_desmotado = db.relationship('ProcesoDesmotado', backref='carga', uselist=False)
+    
     # --- NUEVA RELACIÓN AÑADIDA ---
     liquidacion = db.relationship('Liquidacion', backref='carga', uselist=False)
 
@@ -80,10 +81,10 @@ class ProcesoDesmotado(db.Model):
         return 0.0
 
 class Fardo(db.Model):
-    """Modelo para cada fardo de fibra producido."""
+    """Modelo para los fardos de fibra producidos."""
     id = db.Column(db.Integer, primary_key=True)
     proceso_id = db.Column(db.Integer, db.ForeignKey('proceso_desmotado.id'), nullable=False)
-    numero_fardo = db.Column(db.Integer, nullable=False) # Consecutivo por planta/año
+    numero_fardo = db.Column(db.Integer, nullable=False)
     peso = db.Column(db.Float, nullable=False)
     clasificacion = db.relationship('ClasificacionCalidad', backref='fardo', uselist=False)
 
@@ -102,20 +103,20 @@ class ClasificacionCalidad(db.Model):
 
 # --- NUEVO MODELO AÑADIDO ---
 class Liquidacion(db.Model):
-    """Modelo para almacenar los datos de la liquidación de una carga."""
+    """Modelo para registrar la liquidación final de una carga."""
     id = db.Column(db.Integer, primary_key=True)
     carga_id = db.Column(db.Integer, db.ForeignKey('carga.id'), nullable=False, unique=True)
+    numero_liquidacion = db.Column(db.String(20), unique=True, nullable=False)
     fecha_liquidacion = db.Column(db.DateTime, default=datetime.utcnow)
-    numero_liquidacion = db.Column(db.String(50), unique=True, nullable=False)
     
+    # Datos económicos
     precio_kilo_bruto = db.Column(db.Float, nullable=False)
-    total_liquidacion_bruta = db.Column(db.Float, nullable=False)
-    
-    anticipo_recibido = db.Column(db.Float, default=0.0)
-    importe_retencion = db.Column(db.Float, default=0.0)
+    total_bruto = db.Column(db.Float, nullable=False)
+    anticipo = db.Column(db.Float, default=0.0)
+    retenciones = db.Column(db.Float, default=0.0)
     otras_deducciones = db.Column(db.Float, default=0.0)
+    total_a_pagar = db.Column(db.Float, nullable=False)
     
-    total_a_cobrar = db.Column(db.Float, nullable=False)
-    
+    observaciones = db.Column(db.Text)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     usuario = db.relationship('User')
