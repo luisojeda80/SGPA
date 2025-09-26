@@ -1,49 +1,70 @@
-# Agregar esta clase a tu archivo app/forms.py
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, SelectField, TextAreaField, FloatField, IntegerField
+from wtforms.validators import DataRequired, Length, Email, Optional, NumberRange
+from wtforms import ValidationError
 
 class LiquidacionForm(FlaskForm):
-    """Formulario para generar la liquidación de una carga."""
-    precio_kilo_bruto = FloatField(
-        'Precio por Kilo Bruto ($)', 
-        validators=[
-            DataRequired(message='El precio por kilo es obligatorio'),
-            NumberRange(min=0.01, message='El precio debe ser mayor a 0')
-        ],
-        render_kw={"placeholder": "Ej: 200.00", "step": "0.01"}
-    )
-    
-    anticipo = FloatField(
-        'Anticipo Recibido ($)', 
-        validators=[
-            NumberRange(min=0, message='El anticipo no puede ser negativo')
-        ],
-        default=0.0,
-        render_kw={"placeholder": "0.00", "step": "0.01"}
-    )
-    
-    retenciones = FloatField(
-        'Retenciones ($)', 
-        validators=[
-            NumberRange(min=0, message='Las retenciones no pueden ser negativas')
-        ],
-        default=0.0,
-        render_kw={"placeholder": "0.00", "step": "0.01"}
-    )
-    
-    otras_deducciones = FloatField(
-        'Otras Deducciones ($)', 
-        validators=[
-            NumberRange(min=0, message='Las deducciones no pueden ser negativas')
-        ],
-        default=0.0,
-        render_kw={"placeholder": "0.00", "step": "0.01"}
-    )
-    
-    observaciones = TextAreaField(
-        'Observaciones',
-        render_kw={
-            "placeholder": "Observaciones sobre la liquidación (opcional)",
-            "rows": 3
-        }
-    )
-    
-    submit = SubmitField('Generar Liquidación')
+    """Formulario para ingresar los datos de la liquidación."""
+    precio_kilo_bruto = FloatField('Precio por Kilo de Algodón Bruto ($)', validators=[DataRequired(), NumberRange(min=0)])
+    anticipo = FloatField('Anticipo Recibido ($)', default=0.0, validators=[Optional(), NumberRange(min=0)])
+    retenciones = FloatField('Importe de Retenciones ($)', default=0.0, validators=[Optional(), NumberRange(min=0)])
+    otras_deducciones = FloatField('Otras Deducciones ($)', default=0.0, validators=[Optional(), NumberRange(min=0)])
+    observaciones = TextAreaField('Observaciones', validators=[Optional(), Length(max=500)])
+    submit = SubmitField('Generar y Guardar Liquidación')
+
+class CargaEntradaForm(FlaskForm):
+    """Formulario para registrar la entrada de una nueva carga."""
+    productor = SelectField('Productor', coerce=int, validators=[DataRequired()])
+    chofer_nombre = StringField('Nombre del Chofer', validators=[DataRequired(), Length(max=150)])
+    chofer_dni = StringField('DNI del Chofer', validators=[DataRequired(), Length(min=7, max=10)])
+    vehiculo_placa = StringField('Placa del Vehículo', validators=[DataRequired(), Length(min=6, max=10)])
+    placa_acoplado = StringField('Placa del Acoplado', validators=[Optional(), Length(min=6, max=10)])
+    peso_bruto = FloatField('Peso Bruto (kg)', validators=[DataRequired(message="El peso bruto es obligatorio.")])
+    numero_bascula = IntegerField('Número de Báscula', validators=[DataRequired()])
+    dtv = StringField('Número de DTE-V', validators=[Optional(), Length(max=50)])
+    humedad = FloatField('Humedad (%)', validators=[Optional(), NumberRange(min=0, max=100)])
+    observaciones_romaneo = TextAreaField('Observaciones del Romaneo', validators=[Optional(), Length(max=500)])
+    submit = SubmitField('Registrar Entrada')
+
+class CargaSalidaForm(FlaskForm):
+    """Formulario para registrar la salida de una carga."""
+    peso_tara = FloatField('Peso Tara (kg)', validators=[DataRequired(message="El peso tara es obligatorio.")])
+    submit = SubmitField('Registrar Salida y Completar')
+
+    def __init__(self, carga, *args, **kwargs):
+        super(CargaSalidaForm, self).__init__(*args, **kwargs)
+        self.carga = carga
+
+    def validate_peso_tara(self, field):
+        if field.data and self.carga and field.data > self.carga.peso_bruto:
+            raise ValidationError('El peso tara no puede ser mayor que el peso bruto.')
+
+class ProductorForm(FlaskForm):
+    """Formulario para crear y editar Productores."""
+    nombre_completo = StringField('Nombre Completo', validators=[DataRequired(message="El nombre es obligatorio."), Length(max=200)])
+    cuit = StringField('CUIT', validators=[DataRequired(message="El CUIT es obligatorio."), Length(min=11, max=13)])
+    renpa = StringField('RENPA', validators=[Optional(), Length(max=20)])
+    telefono = StringField('Teléfono', validators=[Optional(), Length(max=50)])
+    email = StringField('Email', validators=[Optional(), Email(message="Email inválido."), Length(max=120)])
+    submit = SubmitField('Guardar')
+
+class DesmotadoForm(FlaskForm):
+    """Formulario para registrar los resultados del proceso de desmotado."""
+    kilos_fibra = FloatField('Kilos de Fibra Producidos', validators=[DataRequired("Este campo es obligatorio."), NumberRange(min=0)])
+    kilos_semilla = FloatField('Kilos de Semilla Producidos', validators=[DataRequired("Este campo es obligatorio."), NumberRange(min=0)])
+    observaciones = TextAreaField('Observaciones', validators=[Optional(), Length(max=500)])
+    submit = SubmitField('Guardar Proceso')
+
+class FardoForm(FlaskForm):
+    """Formulario para añadir un nuevo fardo a un proceso."""
+    peso = FloatField('Peso del Fardo (kg)', validators=[DataRequired(), NumberRange(min=1)])
+    submit = SubmitField('Añadir Fardo')
+
+class ClasificacionForm(FlaskForm):
+    """Formulario para clasificar la calidad de un fardo."""
+    grado = SelectField('Grado de Calidad', choices=[('A', 'Grado A'), ('B', 'Grado B'), ('C', 'Grado C'), ('D', 'Grado D')], validators=[DataRequired()])
+    longitud_fibra = FloatField('Longitud de Fibra (mm)', validators=[Optional(), NumberRange(min=0)])
+    resistencia = FloatField('Resistencia (g/tex)', validators=[Optional(), NumberRange(min=0)])
+    micronaire = FloatField('Micronaire', validators=[Optional(), NumberRange(min=0)])
+    observaciones = TextAreaField('Observaciones', validators=[Optional(), Length(max=500)])
+    submit = SubmitField('Guardar Clasificación')
