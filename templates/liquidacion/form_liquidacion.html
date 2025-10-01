@@ -64,18 +64,20 @@
                         {% endfor %}
                     </div>
 
+                    <!-- CAMPO CORREGIDO -->
                     <div class="mb-3">
-                        {{ form.anticipo.label(class="form-label") }}
-                        {{ form.anticipo(class="form-control") }}
-                        {% for error in form.anticipo.errors %}
+                        {{ form.anticipo_recibido.label(class="form-label") }}
+                        {{ form.anticipo_recibido(class="form-control") }}
+                        {% for error in form.anticipo_recibido.errors %}
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
 
+                    <!-- CAMPO CORREGIDO -->
                     <div class="mb-3">
-                        {{ form.retenciones.label(class="form-label") }}
-                        {{ form.retenciones(class="form-control") }}
-                        {% for error in form.retenciones.errors %}
+                        {{ form.importe_retencion.label(class="form-label") }}
+                        {{ form.importe_retencion(class="form-control") }}
+                        {% for error in form.importe_retencion.errors %}
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
@@ -125,8 +127,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const pesoNeto = {{ carga.peso_neto }};
     const precioInput = document.getElementById('precio_kilo_bruto');
-    const anticipoInput = document.getElementById('anticipo');
-    const retencionesInput = document.getElementById('retenciones');
+    // IDs CORREGIDOS
+    const anticipoInput = document.getElementById('anticipo_recibido');
+    const retencionesInput = document.getElementById('importe_retencion');
     const deduccionesInput = document.getElementById('otras_deducciones');
     const totalBrutoSpan = document.getElementById('total-bruto');
     const totalPagarSpan = document.getElementById('total-pagar');
@@ -140,8 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalBruto = precio * pesoNeto;
         const totalPagar = totalBruto - anticipo - retenciones - deducciones;
 
-        totalBrutoSpan.textContent = '$' + totalBruto.toLocaleString('es-AR', {minimumFractionDigits: 2});
-        totalPagarSpan.textContent = '$' + totalPagar.toLocaleString('es-AR', {minimumFractionDigits: 2});
+        totalBrutoSpan.textContent = '$' + totalBruto.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        totalPagarSpan.textContent = '$' + totalPagar.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
         // Cambiar color si es negativo
         if (totalPagar < 0) {

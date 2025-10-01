@@ -6,11 +6,10 @@ from app.models.operaciones import Carga, ProcesoDesmotado
 
 bp = Blueprint('desmotado', __name__, url_prefix='/desmotado')
 
-# --- NOMBRE DE FUNCIÓN ACTUALIZADO ---
 @bp.route('/pendientes')
 @login_required
 @roles_accepted('Administrativo', 'AdminPlanta', 'CasaCentral')
-def lotes_pendientes():  # Antes se llamaba listar_lotes_pendientes
+def lotes_pendientes():
     """Muestra los lotes que han completado el pesaje y están pendientes de desmotar."""
     page = request.args.get('page', 1, type=int)
     
@@ -27,11 +26,11 @@ def lotes_pendientes():  # Antes se llamaba listar_lotes_pendientes
     return render_template('desmotado/lista_lotes_pendientes.html', title='Lotes Pendientes de Desmotar', lotes=lotes)
 
 
-# --- NOMBRE DE FUNCIÓN ACTUALIZADO ---
 @bp.route('/procesar/<int:carga_id>', methods=['GET', 'POST'])
 @login_required
-@roles_accepted('Administrativo', 'AdminPlanta')
-def registrar_proceso(carga_id):  # Antes se llamaba procesar_lote
+# --- LÍNEA CORREGIDA: Se añade 'CasaCentral' a los roles permitidos ---
+@roles_accepted('Administrativo', 'AdminPlanta', 'CasaCentral')
+def registrar_proceso(carga_id):
     """Formulario para registrar el resultado del desmotado de un lote específico."""
     carga = Carga.query.get_or_404(carga_id)
     
@@ -57,4 +56,3 @@ def registrar_proceso(carga_id):  # Antes se llamaba procesar_lote
         return redirect(url_for('desmotado.lotes_pendientes'))
 
     return render_template('desmotado/form_desmotado.html', title=f'Procesar Lote {carga.lote_id}', form=form, carga=carga)
-
