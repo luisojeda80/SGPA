@@ -64,10 +64,10 @@
                         <!-- INICIO: Menú de Procesos Desplegable -->
                         {% if current_user.has_role('Administrativo') or current_user.has_role('AdminPlanta') or current_user.has_role('CasaCentral') %}
                         <li class="nav-item">
-                             <a class="nav-link collapsed" href="#procesos-submenu" data-bs-toggle="collapse" aria-expanded="false">
+                             <a class="nav-link" href="#procesos-submenu" data-bs-toggle="collapse" aria-expanded="true">
                                 <i class="bi bi-arrow-repeat me-2"></i> Procesos
                             </a>
-                            <div class="collapse" id="procesos-submenu">
+                            <div class="collapse show" id="procesos-submenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
                                         <a class="nav-link" href="{{ url_for('desmotado.lotes_pendientes') }}">
@@ -88,10 +88,10 @@
                         <!-- INICIO: Menú de Finanzas Desplegable -->
                         {% if current_user.has_role('Administrativo') or current_user.has_role('AdminPlanta') or current_user.has_role('CasaCentral') %}
                         <li class="nav-item">
-                             <a class="nav-link collapsed" href="#finanzas-submenu" data-bs-toggle="collapse" aria-expanded="false">
+                             <a class="nav-link" href="#finanzas-submenu" data-bs-toggle="collapse" aria-expanded="true">
                                 <i class="bi bi-cash-coin me-2"></i> Finanzas
                             </a>
-                            <div class="collapse" id="finanzas-submenu">
+                            <div class="collapse show" id="finanzas-submenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
                                         <a class="nav-link" href="{{ url_for('liquidacion.lotes_pendientes') }}">

@@ -53,8 +53,8 @@ class Carga(db.Model):
     usuario_salida = db.relationship('User', foreign_keys=[usuario_salida_id])
     proceso_desmotado = db.relationship('ProcesoDesmotado', backref='carga', uselist=False)
     
-    # --- NUEVA RELACIÓN AÑADIDA ---
-    liquidacion = db.relationship('Liquidacion', backref='carga', uselist=False)
+    # --- RELACIÓN CORREGIDA ---
+    liquidacion_asociada = db.relationship('Liquidacion', backref='carga_origen', uselist=False)
 
     @hybrid_property
     def peso_neto(self):
@@ -71,7 +71,12 @@ class ProcesoDesmotado(db.Model):
     kilos_semilla = db.Column(db.Float, nullable=False)
     observaciones = db.Column(db.Text)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    usuario = db.relationship('User')
+    operario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relaciones
+    usuario = db.relationship('User', foreign_keys=[usuario_id])
+    operario = db.relationship('User', foreign_keys=[operario_id])
+    
     fardos = db.relationship('Fardo', backref='proceso_desmotado', lazy='dynamic')
 
     @hybrid_property
@@ -101,22 +106,92 @@ class ClasificacionCalidad(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     usuario = db.relationship('User')
 
-# --- NUEVO MODELO AÑADIDO ---
 class Liquidacion(db.Model):
-    """Modelo para registrar la liquidación final de una carga."""
+    """Modelo ampliado para liquidación de algodón."""
     id = db.Column(db.Integer, primary_key=True)
-    carga_id = db.Column(db.Integer, db.ForeignKey('carga.id'), nullable=False, unique=True)
-    numero_liquidacion = db.Column(db.String(20), unique=True, nullable=False)
-    fecha_liquidacion = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Datos económicos
-    precio_kilo_bruto = db.Column(db.Float, nullable=False)
-    total_bruto = db.Column(db.Float, nullable=False)
-    anticipo = db.Column(db.Float, default=0.0)
-    retenciones = db.Column(db.Float, default=0.0)
-    otras_deducciones = db.Column(db.Float, default=0.0)
-    total_a_pagar = db.Column(db.Float, nullable=False)
+    # 1. Datos obligatorios de la liquidación
+    numero_ticket_balanza = db.Column(db.String(20), unique=True, nullable=False)
+    numero_romaneo = db.Column(db.String(20), nullable=False)
+    fecha_liquidacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    productor_id = db.Column(db.Integer, db.ForeignKey('productor.id'), nullable=False)
+    campo_lote = db.Column(db.String(100))
     
+    # 2. Relación con carga (opcional - puede ser independiente)
+    carga_id = db.Column(db.Integer, db.ForeignKey('carga.id'))
+    
+    # 3. Parámetros de cálculo
+    algodon_bruto_total = db.Column(db.Float, nullable=False)  # kg
+    fibra_obtenida = db.Column(db.Float, nullable=False)       # kg
+    semilla_obtenida = db.Column(db.Float, nullable=False)     # kg
+    
+    # 4. Precios y calidad
+    calidad_algodon = db.Column(db.String(1), nullable=False)  # 1, 2, 3
+    precio_por_tonelada = db.Column(db.Float, nullable=False)
+    
+    # 5. Gastos asociados
+    deuda_semilla = db.Column(db.Float, default=0.0)
+    descuento_prestamos = db.Column(db.Float, default=0.0)
+    adelantos = db.Column(db.Float, default=0.0)
+    otros_gastos = db.Column(db.Float, default=0.0)
+    descripcion_otros_gastos = db.Column(db.Text)
+    
+    # 6. Forma de pago
+    forma_pago = db.Column(db.String(20), nullable=False)  # transferencia, banco, efectivo
+    banco_destino = db.Column(db.String(100))
+    cuenta_destino = db.Column(db.String(50))
+    
+    # 7. Control interno
+    numero_orden_pago = db.Column(db.String(20))
+    sucursal_cobro = db.Column(db.String(100))
     observaciones = db.Column(db.Text)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relaciones CORREGIDAS
+    productor = db.relationship('Productor')
+    # La relación con carga se maneja a través de carga_id
     usuario = db.relationship('User')
+    pesajes = db.relationship('PesajeLiquidacion', backref='liquidacion_padre', lazy='dynamic')
+    fardos = db.relationship('FardoLiquidacion', backref='liquidacion_padre', lazy='dynamic')
+    
+    # Propiedades calculadas
+    @hybrid_property
+    def rinde_porcentaje(self):
+        if self.algodon_bruto_total > 0:
+            return (self.fibra_obtenida / self.algodon_bruto_total) * 100
+        return 0.0
+    
+    @hybrid_property
+    def total_bruto(self):
+        return (self.fibra_obtenida / 1000) * self.precio_por_tonelada
+    
+    @hybrid_property
+    def total_gastos(self):
+        return (self.deuda_semilla + self.descuento_prestamos + 
+                self.adelantos + self.otros_gastos)
+    
+    @hybrid_property
+    def neto_a_pagar(self):
+        return self.total_bruto - self.total_gastos
+
+class PesajeLiquidacion(db.Model):
+    """Modelo para múltiples pesajes en una liquidación."""
+    id = db.Column(db.Integer, primary_key=True)
+    liquidacion_id = db.Column(db.Integer, db.ForeignKey('liquidacion.id'), nullable=False)
+    fecha_pesaje = db.Column(db.DateTime, nullable=False)
+    peso_bruto = db.Column(db.Float, nullable=False)
+    peso_tara = db.Column(db.Float, nullable=False)
+    observaciones = db.Column(db.Text)
+    
+    @hybrid_property
+    def peso_neto(self):
+        return self.peso_bruto - self.peso_tara
+
+class FardoLiquidacion(db.Model):
+    """Modelo para los fardos en la liquidación."""
+    id = db.Column(db.Integer, primary_key=True)
+    liquidacion_id = db.Column(db.Integer, db.ForeignKey('liquidacion.id'), nullable=False)
+    numero_fardo = db.Column(db.Integer, nullable=False)
+    peso = db.Column(db.Float, nullable=False)
+    calidad = db.Column(db.String(1), nullable=False)  # 1, 2, 3
+    observaciones = db.Column(db.Text)

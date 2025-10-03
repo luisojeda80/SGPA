@@ -28,7 +28,6 @@ def lotes_pendientes():
 
 @bp.route('/procesar/<int:carga_id>', methods=['GET', 'POST'])
 @login_required
-# --- LÍNEA CORREGIDA: Se añade 'CasaCentral' a los roles permitidos ---
 @roles_accepted('Administrativo', 'AdminPlanta', 'CasaCentral')
 def registrar_proceso(carga_id):
     """Formulario para registrar el resultado del desmotado de un lote específico."""
@@ -45,7 +44,8 @@ def registrar_proceso(carga_id):
             kilos_fibra=form.kilos_fibra.data,
             kilos_semilla=form.kilos_semilla.data,
             observaciones=form.observaciones.data,
-            usuario_id=current_user.id
+            usuario_id=current_user.id,
+            operario_id=current_user.id  # ← AÑADE ESTA LÍNEA
         )
         carga.estado = 'Procesado'
         

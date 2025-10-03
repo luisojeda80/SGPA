@@ -39,19 +39,37 @@
                         <h6 class="text-primary mb-3"><i class="bi bi-person me-2"></i>Datos del Productor</h6>
                         <dl class="row">
                             <dt class="col-sm-4">Nombre:</dt>
-                            <dd class="col-sm-8">{{ liquidacion.carga.productor.nombre_completo }}</dd>
+                            <dd class="col-sm-8">
+                                {% if liquidacion.carga_origen %}
+                                    {{ liquidacion.carga_origen.productor.nombre_completo }}
+                                {% else %}
+                                    {{ liquidacion.productor.nombre_completo }}
+                                {% endif %}
+                            </dd>
                             
                             <dt class="col-sm-4">CUIT:</dt>
-                            <dd class="col-sm-8">{{ liquidacion.carga.productor.cuit }}</dd>
+                            <dd class="col-sm-8">
+                                {% if liquidacion.carga_origen %}
+                                    {{ liquidacion.carga_origen.productor.cuit }}
+                                {% else %}
+                                    {{ liquidacion.productor.cuit }}
+                                {% endif %}
+                            </dd>
                             
-                            {% if liquidacion.carga.productor.renpa %}
+                            {% if liquidacion.carga_origen and liquidacion.carga_origen.productor.renpa %}
                             <dt class="col-sm-4">RENPA:</dt>
-                            <dd class="col-sm-8">{{ liquidacion.carga.productor.renpa }}</dd>
+                            <dd class="col-sm-8">{{ liquidacion.carga_origen.productor.renpa }}</dd>
+                            {% elif liquidacion.productor.renpa %}
+                            <dt class="col-sm-4">RENPA:</dt>
+                            <dd class="col-sm-8">{{ liquidacion.productor.renpa }}</dd>
                             {% endif %}
                             
-                            {% if liquidacion.carga.productor.telefono %}
+                            {% if liquidacion.carga_origen and liquidacion.carga_origen.productor.telefono %}
                             <dt class="col-sm-4">Teléfono:</dt>
-                            <dd class="col-sm-8">{{ liquidacion.carga.productor.telefono }}</dd>
+                            <dd class="col-sm-8">{{ liquidacion.carga_origen.productor.telefono }}</dd>
+                            {% elif liquidacion.productor.telefono %}
+                            <dt class="col-sm-4">Teléfono:</dt>
+                            <dd class="col-sm-8">{{ liquidacion.productor.telefono }}</dd>
                             {% endif %}
                         </dl>
                     </div>
@@ -60,20 +78,34 @@
                     <div class="col-md-6">
                         <h6 class="text-primary mb-3"><i class="bi bi-box me-2"></i>Datos del Lote</h6>
                         <dl class="row">
+                            {% if liquidacion.carga_origen %}
                             <dt class="col-sm-4">Lote ID:</dt>
-                            <dd class="col-sm-8"><strong>{{ liquidacion.carga.lote_id }}</strong></dd>
+                            <dd class="col-sm-8"><strong>{{ liquidacion.carga_origen.lote_id }}</strong></dd>
                             
                             <dt class="col-sm-4">Fecha Entrada:</dt>
-                            <dd class="col-sm-8">{{ liquidacion.carga.fecha_entrada.strftime('%d/%m/%Y') }}</dd>
+                            <dd class="col-sm-8">{{ liquidacion.carga_origen.fecha_entrada.strftime('%d/%m/%Y') }}</dd>
                             
                             <dt class="col-sm-4">Peso Bruto:</dt>
-                            <dd class="col-sm-8">{{ "%.2f"|format(liquidacion.carga.peso_bruto) }} kg</dd>
+                            <dd class="col-sm-8">{{ "%.2f"|format(liquidacion.carga_origen.peso_bruto) }} kg</dd>
                             
                             <dt class="col-sm-4">Peso Tara:</dt>
-                            <dd class="col-sm-8">{{ "%.2f"|format(liquidacion.carga.peso_tara) }} kg</dd>
+                            <dd class="col-sm-8">{{ "%.2f"|format(liquidacion.carga_origen.peso_tara) }} kg</dd>
                             
                             <dt class="col-sm-4">Peso Neto:</dt>
-                            <dd class="col-sm-8"><strong>{{ "%.2f"|format(liquidacion.carga.peso_neto) }} kg</strong></dd>
+                            <dd class="col-sm-8"><strong>{{ "%.2f"|format(liquidacion.carga_origen.peso_neto) }} kg</strong></dd>
+                            {% else %}
+                            <dt class="col-sm-4">Campo/Lote:</dt>
+                            <dd class="col-sm-8"><strong>{{ liquidacion.campo_lote or 'No especificado' }}</strong></dd>
+                            
+                            <dt class="col-sm-4">Algodón Bruto:</dt>
+                            <dd class="col-sm-8"><strong>{{ "%.2f"|format(liquidacion.algodon_bruto_total) }} kg</strong></dd>
+                            
+                            <dt class="col-sm-4">Fibra Obtenida:</dt>
+                            <dd class="col-sm-8">{{ "%.2f"|format(liquidacion.fibra_obtenida) }} kg</dd>
+                            
+                            <dt class="col-sm-4">Semilla Obtenida:</dt>
+                            <dd class="col-sm-8">{{ "%.2f"|format(liquidacion.semilla_obtenida) }} kg</dd>
+                            {% endif %}
                         </dl>
                     </div>
                 </div>
@@ -85,19 +117,39 @@
                     <div class="col-md-6">
                         <h6 class="text-success mb-3"><i class="bi bi-gear me-2"></i>Proceso de Desmotado</h6>
                         <dl class="row">
+                            {% if liquidacion.carga_origen and liquidacion.carga_origen.proceso_desmotado %}
                             <dt class="col-sm-6">Fibra Obtenida:</dt>
-                            <dd class="col-sm-6">{{ "%.2f"|format(liquidacion.carga.proceso_desmotado.kilos_fibra) }} kg</dd>
+                            <dd class="col-sm-6">{{ "%.2f"|format(liquidacion.carga_origen.proceso_desmotado.kilos_fibra) }} kg</dd>
                             
                             <dt class="col-sm-6">Semilla Obtenida:</dt>
-                            <dd class="col-sm-6">{{ "%.2f"|format(liquidacion.carga.proceso_desmotado.kilos_semilla) }} kg</dd>
+                            <dd class="col-sm-6">{{ "%.2f"|format(liquidacion.carga_origen.proceso_desmotado.kilos_semilla) }} kg</dd>
                             
                             <dt class="col-sm-6">Rendimiento:</dt>
                             <dd class="col-sm-6">
-                                <span class="badge bg-info">{{ "%.2f"|format(liquidacion.carga.proceso_desmotado.rendimiento) }}%</span>
+                                <span class="badge bg-info">{{ "%.2f"|format(liquidacion.carga_origen.proceso_desmotado.rendimiento) }}%</span>
                             </dd>
                             
                             <dt class="col-sm-6">Fecha Proceso:</dt>
-                            <dd class="col-sm-6">{{ liquidacion.carga.proceso_desmotado.fecha_proceso.strftime('%d/%m/%Y') }}</dd>
+                            <dd class="col-sm-6">{{ liquidacion.carga_origen.proceso_desmotado.fecha_proceso.strftime('%d/%m/%Y') }}</dd>
+                            {% else %}
+                            <dt class="col-sm-6">Fibra Obtenida:</dt>
+                            <dd class="col-sm-6">{{ "%.2f"|format(liquidacion.fibra_obtenida) }} kg</dd>
+                            
+                            <dt class="col-sm-6">Semilla Obtenida:</dt>
+                            <dd class="col-sm-6">{{ "%.2f"|format(liquidacion.semilla_obtenida) }} kg</dd>
+                            
+                            <dt class="col-sm-6">Rendimiento:</dt>
+                            <dd class="col-sm-6">
+                                <span class="badge bg-info">{{ "%.2f"|format(liquidacion.rinde_porcentaje) }}%</span>
+                            </dd>
+                            
+                            <dt class="col-sm-6">Calidad:</dt>
+                            <dd class="col-sm-6">
+                                <span class="badge bg-{% if liquidacion.calidad_algodon == '1' %}danger{% elif liquidacion.calidad_algodon == '2' %}success{% else %}warning{% endif %}">
+                                    Calidad {{ liquidacion.calidad_algodon }}
+                                </span>
+                            </dd>
+                            {% endif %}
                         </dl>
                     </div>
                     
@@ -107,14 +159,26 @@
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <tbody>
+                                    {% if liquidacion.carga_origen %}
                                     <tr>
                                         <td>Peso Neto:</td>
-                                        <td class="text-end">{{ "%.2f"|format(liquidacion.carga.peso_neto) }} kg</td>
+                                        <td class="text-end">{{ "%.2f"|format(liquidacion.carga_origen.peso_neto) }} kg</td>
                                     </tr>
                                     <tr>
                                         <td>Precio por Kg:</td>
                                         <td class="text-end">${{ "%.2f"|format(liquidacion.precio_kilo_bruto) }}</td>
                                     </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td>Fibra Producida:</td>
+                                        <td class="text-end">{{ "%.2f"|format(liquidacion.fibra_obtenida) }} kg</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Precio por Tonelada:</td>
+                                        <td class="text-end">${{ "{:,.2f}".format(liquidacion.precio_por_tonelada) }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    
                                     <tr class="table-light">
                                         <td><strong>Total Bruto:</strong></td>
                                         <td class="text-end"><strong>${{ "{:,.2f}".format(liquidacion.total_bruto) }}</strong></td>
@@ -144,6 +208,66 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Información de Gastos (para liquidaciones completas) -->
+                {% if liquidacion.deuda_semilla > 0 or liquidacion.descuento_prestamos > 0 or liquidacion.adelantos > 0 or liquidacion.otros_gastos > 0 %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-danger mb-3"><i class="bi bi-currency-dollar me-2"></i>Desglose de Gastos</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th class="text-end">Monto ($)</th>
+                                        {% if liquidacion.descripcion_otros_gastos %}
+                                        <th>Descripción</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if liquidacion.deuda_semilla > 0 %}
+                                    <tr>
+                                        <td>Deuda por Semilla</td>
+                                        <td class="text-end text-danger">${{ "{:,.2f}".format(liquidacion.deuda_semilla) }}</td>
+                                        {% if liquidacion.descripcion_otros_gastos %}<td></td>{% endif %}
+                                    </tr>
+                                    {% endif %}
+                                    {% if liquidacion.descuento_prestamos > 0 %}
+                                    <tr>
+                                        <td>Descuento por Préstamos</td>
+                                        <td class="text-end text-danger">${{ "{:,.2f}".format(liquidacion.descuento_prestamos) }}</td>
+                                        {% if liquidacion.descripcion_otros_gastos %}<td></td>{% endif %}
+                                    </tr>
+                                    {% endif %}
+                                    {% if liquidacion.adelantos > 0 %}
+                                    <tr>
+                                        <td>Adelantos</td>
+                                        <td class="text-end text-danger">${{ "{:,.2f}".format(liquidacion.adelantos) }}</td>
+                                        {% if liquidacion.descripcion_otros_gastos %}<td></td>{% endif %}
+                                    </tr>
+                                    {% endif %}
+                                    {% if liquidacion.otros_gastos > 0 %}
+                                    <tr>
+                                        <td>Otros Gastos</td>
+                                        <td class="text-end text-danger">${{ "{:,.2f}".format(liquidacion.otros_gastos) }}</td>
+                                        {% if liquidacion.descripcion_otros_gastos %}
+                                        <td>{{ liquidacion.descripcion_otros_gastos }}</td>
+                                        {% endif %}
+                                    </tr>
+                                    {% endif %}
+                                    <tr class="table-danger">
+                                        <td><strong>TOTAL GASTOS</strong></td>
+                                        <td class="text-end fw-bold text-danger">${{ "{:,.2f}".format(liquidacion.total_gastos) }}</td>
+                                        {% if liquidacion.descripcion_otros_gastos %}<td></td>{% endif %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Observaciones -->
                 {% if liquidacion.observaciones %}

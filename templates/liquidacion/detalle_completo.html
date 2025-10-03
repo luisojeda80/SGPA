@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ title }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('liquidacion.listar') }}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left me-1"></i> Volver al Listado
+        </a>
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> Imprimir
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información de la Liquidación Completa -->
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-file-earmark-check me-2"></i>
+                            Liquidación Completa - {{ liquidacion.numero_ticket_balanza }}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-light text-dark fs-6">
+                            {{ liquidacion.fecha_liquidacion.strftime('%d/%m/%Y %H:%M') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Encabezado con datos principales -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 bg-light">
+                            <h6 class="text-center mb-3">Datos de Identificación</h6>
+                            <div class="text-center">
+                                <strong class="d-block fs-5">{{ liquidacion.numero_ticket_balanza }}</strong>
+                                <small class="text-muted">Ticket Balanza</small>
+                            </div>
+                            <div class="text-center mt-2">
+                                <strong class="d-block">{{ liquidacion.numero_romaneo }}</strong>
+                                <small class="text-muted">N° Romaneo</small>
+                            </div>
+                            {% if liquidacion.numero_liquidacion %}
+                            <div class="text-center mt-2">
+                                <strong class="d-block text-success">{{ liquidacion.numero_liquidacion }}</strong>
+                                <small class="text-muted">Liquidación</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="bi bi-person me-2"></i>Datos del Productor</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-4">Nombre:</dt>
+                                    <dd class="col-sm-8"><strong>{{ liquidacion.productor.nombre_completo }}</strong></dd>
+                                    
+                                    <dt class="col-sm-4">CUIT:</dt>
+                                    <dd class="col-sm-8">{{ liquidacion.productor.cuit }}</dd>
+                                    
+                                    {% if liquidacion.productor.renpa %}
+                                    <dt class="col-sm-4">RENPA:</dt>
+                                    <dd class="col-sm-8">{{ liquidacion.productor.renpa }}</dd>
+                                    {% endif %}
+                                </dl>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="bi bi-geo me-2"></i>Información del Lote</h6>
+                                <dl class="row">
+                                    <dt class="col-sm-4">Campo/Lote:</dt>
+                                    <dd class="col-sm-8">{{ liquidacion.campo_lote or 'No especificado' }}</dd>
+                                    
+                                    {% if liquidacion.carga %}
+                                    <dt class="col-sm-4">Lote ID:</dt>
+                                    <dd class="col-sm-8"><strong>{{ liquidacion.carga.lote_id }}</strong></dd>
+                                    {% endif %}
+                                    
+                                    <dt class="col-sm-4">Fecha Liquid.:</dt>
+                                    <dd class="col-sm-8">{{ liquidacion.fecha_liquidacion.strftime('%d/%m/%Y') }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Datos de Producción y Cálculos -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3"><i class="bi bi-speedometer2 me-2"></i>Datos de Producción</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold">Algodón Bruto Total:</td>
+                                        <td class="text-end">{{ "%.2f"|format(liquidacion.algodon_bruto_total) }} kg</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Fibra Obtenida:</td>
+                                        <td class="text-end">{{ "%.2f"|format(liquidacion.fibra_obtenida) }} kg</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Semilla Obtenida:</td>
+                                        <td class="text-end">{{ "%.2f"|format(liquidacion.semilla_obtenida) }} kg</td>
+                                    </tr>
+                                    <tr class="table-info">
+                                        <td class="fw-bold">RINDE Calculado:</td>
+                                        <td class="text-end fw-bold">
+                                            {{ "%.2f"|format(liquidacion.rinde_porcentaje) }}%
+                                            <span class="badge bg-{% if liquidacion.rinde_porcentaje >= 33 %}success{% else %}warning{% endif %} ms-1">
+                                                {% if liquidacion.rinde_porcentaje >= 33 %}Calidad 2{% else %}Calidad 3{% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-warning mb-3"><i class="bi bi-calculator me-2"></i>Parámetros de Calidad y Precio</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold">Calidad Asignada:</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-{% if liquidacion.calidad_algodon == '1' %}danger{% elif liquidacion.calidad_algodon == '2' %}success{% else %}warning{% endif %}">
+                                                Calidad {{ liquidacion.calidad_algodon }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Precio por Tonelada:</td>
+                                        <td class="text-end">${{ "{:,.2f}".format(liquidacion.precio_por_tonelada) }}</td>
+                                    </tr>
+                                    <tr class="table-light">
+                                        <td class="fw-bold">Total Bruto a Liquidar:</td>
+                                        <td class="text-end fw-bold">${{ "{:,.2f}".format(liquidacion.total_bruto) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gastos Asociados -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-danger mb-3"><i class="bi bi-currency-dollar me-2"></i>Gastos y Deducciones</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th class="text-end">Monto ($)</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Deuda por Semilla</td>
+                                        <td class="text-end text-danger">- ${{ "{:,.2f}".format(liquidacion.deuda_semilla) }}</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Descuento por Préstamos</td>
+                                        <td class="text-end text-danger">- ${{ "{:,.2f}".format(liquidacion.descuento_prestamos) }}</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Adelantos</td>
+                                        <td class="text-end text-danger">- ${{ "{:,.2f}".format(liquidacion.adelantos) }}</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Otros Gastos</td>
+                                        <td class="text-end text-danger">- ${{ "{:,.2f}".format(liquidacion.otros_gastos) }}</td>
+                                        <td>{{ liquidacion.descripcion_otros_gastos or '' }}</td>
+                                    </tr>
+                                    <tr class="table-danger">
+                                        <td class="fw-bold">TOTAL GASTOS</td>
+                                        <td class="text-end fw-bold text-danger">- ${{ "{:,.2f}".format(liquidacion.total_gastos) }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen Final -->
+                <div class="row mb-4">
+                    <div class="col-md-8 offset-md-2">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white text-center">
+                                <h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>RESUMEN FINAL DE LIQUIDACIÓN</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-6 border-end">
+                                        <h6 class="text-muted">TOTAL BRUTO</h6>
+                                        <h3 class="text-primary">${{ "{:,.2f}".format(liquidacion.total_bruto) }}</h3>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-muted">NETO A PAGAR</h6>
+                                        <h3 class="{% if liquidacion.neto_a_pagar > 0 %}text-success{% else %}text-danger{% endif %}">
+                                            ${{ "{:,.2f}".format(liquidacion.neto_a_pagar) }}
+                                        </h3>
+                                    </div>
+                                </div>
+                                
+                                <!-- Información de Pago -->
+                                {% if liquidacion.forma_pago %}
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="bg-light p-2 rounded text-center">
+                                            <small class="text-muted">
+                                                <strong>Forma de Pago:</strong> 
+                                                {% if liquidacion.forma_pago == 'transferencia' %}Transferencia Bancaria
+                                                {% elif liquidacion.forma_pago == 'banco' %}Pago en Banco
+                                                {% else %}Efectivo{% endif %}
+                                                
+                                                {% if liquidacion.banco_destino %}
+                                                • <strong>Banco:</strong> {{ liquidacion.banco_destino }}
+                                                {% endif %}
+                                                
+                                                {% if liquidacion.cuenta_destino %}
+                                                • <strong>Cuenta:</strong> {{ liquidacion.cuenta_destino }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información Adicional -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- Observaciones -->
+                        {% if liquidacion.observaciones %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2"><i class="bi bi-chat-text me-2"></i>Observaciones Generales</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-0">{{ liquidacion.observaciones }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Control Interno -->
+                        {% if liquidacion.numero_orden_pago or liquidacion.sucursal_cobro %}
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2"><i class="bi bi-clipboard-check me-2"></i>Control Interno</h6>
+                            <div class="bg-light p-3 rounded">
+                                {% if liquidacion.numero_orden_pago %}
+                                <p class="mb-1"><strong>N° Orden de Pago:</strong> {{ liquidacion.numero_orden_pago }}</p>
+                                {% endif %}
+                                {% if liquidacion.sucursal_cobro %}
+                                <p class="mb-0"><strong>Sucursal de Cobro:</strong> {{ liquidacion.sucursal_cobro }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <!-- Información del Sistema -->
+                        <div class="bg-light p-3 rounded h-100">
+                            <h6 class="text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Información del Sistema</h6>
+                            <div class="row">
+                                <div class="col-12 mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-person-check me-1"></i>
+                                        <strong>Usuario:</strong> {{ liquidacion.usuario.first_name }} {{ liquidacion.usuario.last_name }}
+                                    </small>
+                                </div>
+                                <div class="col-12 mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>
+                                        <strong>Fecha:</strong> {{ liquidacion.fecha_liquidacion.strftime('%d/%m/%Y a las %H:%M') }}
+                                    </small>
+                                </div>
+                                {% if liquidacion.carga %}
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <i class="bi bi-link me-1"></i>
+                                        <strong>Lote Asociado:</strong> {{ liquidacion.carga.lote_id }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos para impresión -->
+<style>
+@media print {
+    .btn-toolbar, .border-bottom, nav, .sidebar {
+        display: none !important;
+    }
+    
+    .card {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .bg-primary, .bg-success, .bg-danger, .bg-warning, .bg-info {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+    
+    .text-primary, .text-success, .text-warning, .text-danger {
+        color: #000 !important;
+    }
+    
+    .badge {
+        border: 1px solid #000 !important;
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+    
+    .table-light, .table-info, .table-danger {
+        background-color: #f8f9fa !important;
+    }
+}
+</style>
+{% endblock %}

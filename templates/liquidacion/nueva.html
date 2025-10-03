@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Liquidación - SGPA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Nueva Liquidación Completa</h1>
+                <a href="{{ url_for('liquidacion.listar') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Datos de la Liquidación</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="liquidacionForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- 1. Datos Obligatorios -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-primary">
+                                    <i class="fas fa-id-card me-2"></i>1. Datos Obligatorios
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.numero_ticket_balanza.label(class="form-label") }}
+                                    {{ form.numero_ticket_balanza(class="form-control") }}
+                                    {% if form.numero_ticket_balanza.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.numero_ticket_balanza.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.numero_romaneo.label(class="form-label") }}
+                                    {{ form.numero_romaneo(class="form-control") }}
+                                    {% if form.numero_romaneo.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.numero_romaneo.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.fecha_liquidacion.label(class="form-label") }}
+                                    {{ form.fecha_liquidacion(class="form-control", type="date") }}
+                                    {% if form.fecha_liquidacion.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.fecha_liquidacion.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.productor_id.label(class="form-label") }}
+                                    {{ form.productor_id(class="form-select") }}
+                                    {% if form.productor_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.productor_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.campo_lote.label(class="form-label") }}
+                                    {{ form.campo_lote(class="form-control", placeholder="Nombre del campo o lote") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Parámetros de Cálculo -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-success">
+                                    <i class="fas fa-calculator me-2"></i>2. Parámetros de Cálculo
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.algodon_bruto_total.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.algodon_bruto_total(class="form-control", id="algodon_bruto") }}
+                                        <span class="input-group-text">kg</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.fibra_obtenida.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.fibra_obtenida(class="form-control", id="fibra_obtenida") }}
+                                        <span class="input-group-text">kg</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.semilla_obtenida.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.semilla_obtenida(class="form-control") }}
+                                        <span class="input-group-text">kg</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Rinde Calculado</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="rinde_calculado" readonly>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted" id="mensaje_rinde"></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Precios y Calidad -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-warning">
+                                    <i class="fas fa-tag me-2"></i>3. Precios y Calidad
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.calidad_algodon.label(class="form-label") }}
+                                    {{ form.calidad_algodon(class="form-select", id="calidad_algodon") }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.precio_por_tonelada.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.precio_por_tonelada(class="form-control", id="precio_tonelada") }}
+                                        <span class="input-group-text">/tn</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Total Bruto Calculado</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" id="total_bruto_calculado" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Gastos Asociados -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-danger">
+                                    <i class="fas fa-money-bill-wave me-2"></i>4. Gastos Asociados
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.deuda_semilla.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.deuda_semilla(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.descuento_prestamos.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.descuento_prestamos(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.adelantos.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.adelantos(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    {{ form.otros_gastos.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.otros_gastos(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    {{ form.descripcion_otros_gastos.label(class="form-label") }}
+                                    {{ form.descripcion_otros_gastos(class="form-control", rows="2", placeholder="Descripción de otros gastos...") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Forma de Pago -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-info">
+                                    <i class="fas fa-credit-card me-2"></i>5. Forma de Pago
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.forma_pago.label(class="form-label") }}
+                                    {{ form.forma_pago(class="form-select") }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.banco_destino.label(class="form-label") }}
+                                    {{ form.banco_destino(class="form-control", placeholder="Nombre del banco") }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.cuenta_destino.label(class="form-label") }}
+                                    {{ form.cuenta_destino(class="form-control", placeholder="Número de cuenta o CBU") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. Control Interno -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-secondary">
+                                    <i class="fas fa-clipboard-check me-2"></i>6. Control Interno
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.numero_orden_pago.label(class="form-label") }}
+                                    {{ form.numero_orden_pago(class="form-control") }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.sucursal_cobro.label(class="form-label") }}
+                                    {{ form.sucursal_cobro(class="form-control") }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    {{ form.observaciones.label(class="form-label") }}
+                                    {{ form.observaciones(class="form-control", rows="3", placeholder="Observaciones generales...") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen Calculado -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Resumen Calculado</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-md-4">
+                                                <h6 class="text-muted">Total Bruto</h6>
+                                                <h4 class="text-primary" id="resumen_total_bruto">$ 0.00</h4>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <h6 class="text-muted">Total Gastos</h6>
+                                                <h4 class="text-danger" id="resumen_total_gastos">$ 0.00</h4>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <h6 class="text-muted">Neto a Pagar</h6>
+                                                <h4 class="text-success" id="resumen_neto_pagar">$ 0.00</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('liquidacion.listar') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancelar
+                                    </a>
+                                    {{ form.submit(class="btn btn-primary") }}
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para cálculos automáticos -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const algodonBruto = document.getElementById('algodon_bruto');
+    const fibraObtenida = document.getElementById('fibra_obtenida');
+    const precioTonelada = document.getElementById('precio_tonelada');
+    const rindeCalculado = document.getElementById('rinde_calculado');
+    const mensajeRinde = document.getElementById('mensaje_rinde');
+    const totalBrutoCalculado = document.getElementById('total_bruto_calculado');
+    const calidadAlgodon = document.getElementById('calidad_algodon');
+    
+    // Campos de gastos
+    const deudaSemilla = document.getElementById('deuda_semilla');
+    const descuentoPrestamos = document.getElementById('descuento_prestamos');
+    const adelantos = document.getElementById('adelantos');
+    const otrosGastos = document.getElementById('otros_gastos');
+    
+    // Resumen
+    const resumenTotalBruto = document.getElementById('resumen_total_bruto');
+    const resumenTotalGastos = document.getElementById('resumen_total_gastos');
+    const resumenNetoPagar = document.getElementById('resumen_neto_pagar');
+
+    function calcularRinde() {
+        const algodon = parseFloat(algodonBruto.value) || 0;
+        const fibra = parseFloat(fibraObtenida.value) || 0;
+        
+        if (algodon > 0 && fibra > 0) {
+            const rinde = (fibra / algodon) * 100;
+            rindeCalculado.value = rinde.toFixed(2);
+            
+            // Sugerir calidad según rinde
+            if (rinde >= 33) {
+                mensajeRinde.textContent = 'Rinde ≥33% - Calidad 2 recomendada';
+                mensajeRinde.className = 'text-success';
+                calidadAlgodon.value = '2';
+            } else {
+                mensajeRinde.textContent = 'Rinde <33% - Calidad 3 recomendada';
+                mensajeRinde.className = 'text-warning';
+                calidadAlgodon.value = '3';
+            }
+        } else {
+            rindeCalculado.value = '';
+            mensajeRinde.textContent = '';
+        }
+        
+        calcularTotalBruto();
+        calcularResumen();
+    }
+
+    function calcularTotalBruto() {
+        const fibra = parseFloat(fibraObtenida.value) || 0;
+        const precio = parseFloat(precioTonelada.value) || 0;
+        
+        if (fibra > 0 && precio > 0) {
+            const totalBruto = (fibra / 1000) * precio;
+            totalBrutoCalculado.value = totalBruto.toFixed(2);
+        } else {
+            totalBrutoCalculado.value = '';
+        }
+        
+        calcularResumen();
+    }
+
+    function calcularGastos() {
+        const deuda = parseFloat(deudaSemilla.value) || 0;
+        const descuento = parseFloat(descuentoPrestamos.value) || 0;
+        const adelanto = parseFloat(adelantos.value) || 0;
+        const otros = parseFloat(otrosGastos.value) || 0;
+        
+        return deuda + descuento + adelanto + otros;
+    }
+
+    function calcularResumen() {
+        const totalBruto = parseFloat(totalBrutoCalculado.value) || 0;
+        const totalGastos = calcularGastos();
+        const netoPagar = totalBruto - totalGastos;
+        
+        resumenTotalBruto.textContent = '$ ' + totalBruto.toFixed(2);
+        resumenTotalGastos.textContent = '$ ' + totalGastos.toFixed(2);
+        resumenNetoPagar.textContent = '$ ' + netoPagar.toFixed(2);
+        
+        // Cambiar color si es negativo
+        if (netoPagar < 0) {
+            resumenNetoPagar.className = 'text-danger';
+        } else {
+            resumenNetoPagar.className = 'text-success';
+        }
+    }
+
+    // Event listeners
+    algodonBruto.addEventListener('input', calcularRinde);
+    fibraObtenida.addEventListener('input', calcularRinde);
+    precioTonelada.addEventListener('input', calcularTotalBruto);
+    
+    // Gastos
+    deudaSemilla.addEventListener('input', calcularResumen);
+    descuentoPrestamos.addEventListener('input', calcularResumen);
+    adelantos.addEventListener('input', calcularResumen);
+    otrosGastos.addEventListener('input', calcularResumen);
+    
+    // Calcular al cargar la página
+    calcularRinde();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Lotes Pendientes de Liquidar - SGPA{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Lotes Pendientes de Liquidar</h1>
+                <div>
+                    <a href="{{ url_for('liquidacion.listar') }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-list"></i> Ver Todas las Liquidaciones
+                    </a>
+                    <a href="{{ url_for('liquidacion.nueva') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Liquidación Manual
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lotes Procesados sin Liquidar</h5>
+                </div>
+                <div class="card-body">
+                    {% if lotes.items %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Lote ID</th>
+                                        <th>Productor</th>
+                                        <th>Fecha Proceso</th>
+                                        <th>Peso Neto</th>
+                                        <th>Fibra Producida</th>
+                                        <th>Rinde</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for carga in lotes.items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ carga.lote_id }}</strong>
+                                        </td>
+                                        <td>{{ carga.productor.nombre_completo }}</td>
+                                        <td>{{ carga.proceso_desmotado.fecha_proceso.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ "%.0f"|format(carga.peso_neto) }} kg</td>
+                                        <td>{{ "%.0f"|format(carga.proceso_desmotado.kilos_fibra) }} kg</td>
+                                        <td>
+                                            <span class="badge bg-{% if carga.proceso_desmotado.rendimiento >= 33 %}success{% else %}warning{% endif %}">
+                                                {{ "%.1f"|format(carga.proceso_desmotado.rendimiento) }}%
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('liquidacion.desde_carga', carga_id=carga.id) }}" 
+                                                   class="btn btn-sm btn-primary" title="Liquidar con Sistema Completo">
+                                                    <i class="fas fa-calculator"></i> Liquidar Completo
+                                                </a>
+                                                <a href="{{ url_for('liquidacion.generar_liquidacion', carga_id=carga.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="Liquidación Rápida">
+                                                    <i class="fas fa-bolt"></i> Rápido
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginación -->
+                        {% if lotes.pages > 1 %}
+                        <nav aria-label="Paginación">
+                            <ul class="pagination justify-content-center">
+                                {% if lotes.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('liquidacion.lotes_pendientes', page=lotes.prev_num) }}">Anterior</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for page_num in lotes.iter_pages() %}
+                                    {% if page_num %}
+                                        <li class="page-item {% if page_num == lotes.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('liquidacion.lotes_pendientes', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if lotes.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('liquidacion.lotes_pendientes', page=lotes.next_num) }}">Siguiente</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5>¡No hay lotes pendientes de liquidar!</h5>
+                            <p class="text-muted">Todos los lotes procesados han sido liquidados.</p>
+                            <div class="mt-3">
+                                <a href="{{ url_for('liquidacion.nueva') }}" class="btn btn-primary me-2">
+                                    <i class="fas fa-plus"></i> Crear Liquidación Manual
+                                </a>
+                                <a href="{{ url_for('desmotado.lotes_pendientes') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-industry"></i> Ver Lotes para Procesar
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
