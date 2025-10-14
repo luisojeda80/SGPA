@@ -1,2 +1,17 @@
 *.pyc
 __pycache__/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entornos virtuales
+.venv/
+venv/
+
+# Base de datos local
+instance/
+
+# Variables de entorno
+.env
