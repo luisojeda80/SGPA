@@ -30,9 +30,12 @@ def detalle_proceso(proceso_id):
     form = FardoForm()
 
     if form.validate_on_submit():
-        siguiente_numero = Fardo.siguiente_numero_fardo(proceso.carga.planta_id)
+        # CORRECCIÓN: Cambiar proceso.carga.planta_id por proceso.id
+        siguiente_numero = Fardo.siguiente_numero_fardo(proceso.id)
+        
+        # CORRECCIÓN: Cambiar proceso_desmotado_id por proceso_id
         nuevo_fardo = Fardo(
-            proceso_desmotado_id=proceso.id,
+            proceso_id=proceso.id,  # ← CAMBIADO
             numero_fardo=siguiente_numero,
             peso=form.peso.data
         )
@@ -69,7 +72,8 @@ def clasificar_fardo(fardo_id):
         db.session.add(nueva_clasificacion)
         db.session.commit()
         flash(f'Clasificación del fardo N° {fardo.numero_fardo} guardada.', 'success')
-        return redirect(url_for('calidad.detalle_proceso', proceso_id=fardo.proceso_desmotado_id))
+        # CORRECCIÓN: Cambiar proceso_desmotado_id por proceso_id
+        return redirect(url_for('calidad.detalle_proceso', proceso_id=fardo.proceso_id))
 
     return render_template('calidad/form_clasificacion.html', title=f'Clasificar Fardo N° {fardo.numero_fardo}', form=form, fardo=fardo)
 
@@ -92,6 +96,7 @@ def editar_clasificacion(fardo_id):
         clasificacion.observaciones = form.observaciones.data
         db.session.commit()
         flash(f'Clasificación del fardo N° {fardo.numero_fardo} actualizada.', 'success')
-        return redirect(url_for('calidad.detalle_proceso', proceso_id=fardo.proceso_desmotado_id))
+        # CORRECCIÓN: Cambiar proceso_desmotado_id por proceso_id
+        return redirect(url_for('calidad.detalle_proceso', proceso_id=fardo.proceso_id))
 
     return render_template('calidad/form_clasificacion.html', title=f'Editar Clasificación Fardo N° {fardo.numero_fardo}', form=form, fardo=fardo)

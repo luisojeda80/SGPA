@@ -85,13 +85,6 @@ class ProcesoDesmotado(db.Model):
             return (self.kilos_fibra / self.carga.peso_neto) * 100
         return 0.0
 
-class Fardo(db.Model):
-    """Modelo para los fardos de fibra producidos."""
-    id = db.Column(db.Integer, primary_key=True)
-    proceso_id = db.Column(db.Integer, db.ForeignKey('proceso_desmotado.id'), nullable=False)
-    numero_fardo = db.Column(db.Integer, nullable=False)
-    peso = db.Column(db.Float, nullable=False)
-    clasificacion = db.relationship('ClasificacionCalidad', backref='fardo', uselist=False)
 
 class ClasificacionCalidad(db.Model):
     """Modelo para la clasificación de calidad de un fardo."""
@@ -195,3 +188,42 @@ class FardoLiquidacion(db.Model):
     peso = db.Column(db.Float, nullable=False)
     calidad = db.Column(db.String(1), nullable=False)  # 1, 2, 3
     observaciones = db.Column(db.Text)
+    
+class Fardo(db.Model):
+    """Modelo para los fardos de fibra producidos."""
+    id = db.Column(db.Integer, primary_key=True)
+    proceso_id = db.Column(db.Integer, db.ForeignKey('proceso_desmotado.id'), nullable=False)
+    numero_fardo = db.Column(db.Integer, nullable=False)
+    peso = db.Column(db.Float, nullable=False)
+    clasificacion = db.relationship('ClasificacionCalidad', backref='fardo', uselist=False)
+
+    @classmethod
+    def siguiente_numero_por_proceso(cls, proceso_id):
+        """Obtener el siguiente número de fardo para un proceso específico."""
+        try:
+            max_fardo = db.session.query(
+                db.func.max(cls.numero_fardo)
+            ).filter(cls.proceso_id == proceso_id).scalar()
+            return (max_fardo or 0) + 1
+        except Exception:
+            return 1
+
+    @classmethod
+    def siguiente_numero_por_planta(cls, planta_id):
+        """Obtener el siguiente número de fardo para una planta específica."""
+        try:
+            from .operaciones import ProcesoDesmotado, Carga
+            max_fardo = db.session.query(
+                db.func.max(cls.numero_fardo)
+            ).join(ProcesoDesmotado).join(Carga).filter(
+                Carga.planta_id == planta_id
+            ).scalar()
+            return (max_fardo or 0) + 1
+        except Exception:
+            return 1
+
+    # Método compatible con el nombre original
+    @classmethod
+    def siguiente_numero_fardo(cls, proceso_id):
+        """Método compatible - usa por proceso por defecto."""
+        return cls.siguiente_numero_por_proceso(proceso_id)
