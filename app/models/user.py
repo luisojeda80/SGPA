@@ -75,8 +75,8 @@ class Planta(db.Model):
     def insert_plantas():
         """Inserta las dos plantas iniciales si no existen."""
         plantas = [
-            {'nombre': 'Planta Formosa', 'codigo': 'P01', 'ubicacion': 'Formosa, Argentina'},
-            {'nombre': 'Planta Chaco', 'codigo': 'P02', 'ubicacion': 'Chaco, Argentina'}
+            {'nombre': 'Planta Belgrano', 'codigo': 'P01', 'ubicacion': 'Belgrano, Formosa, Argentina'},
+            {'nombre': 'Planta 213', 'codigo': 'P02', 'ubicacion': 'Villa 213, Formosa, Argentina'}
         ]
         for p_data in plantas:
             planta = Planta.query.filter_by(codigo=p_data['codigo']).first()
